@@ -1,0 +1,1 @@
+export const CLOUD_ADDRESS = "0xe6a668fdfdd5813f3e605f50869eab360595c199";
