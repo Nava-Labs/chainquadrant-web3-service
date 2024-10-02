@@ -1,7 +1,7 @@
+import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import express, { type Router } from "express";
 import { z } from "zod";
-import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { walletController } from "./walletController";
 
 export const walletRegistry = new OpenAPIRegistry();
@@ -9,7 +9,7 @@ export const walletRouter: Router = express.Router();
 
 walletRegistry.registerPath({
   method: "post",
-  path: "/create",
+  path: "/wallet/create",
   tags: ["Create Wallet"],
   responses: createApiResponse(z.null(), "Success"),
 });

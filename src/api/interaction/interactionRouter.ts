@@ -36,7 +36,7 @@ interactionRouter.post("/mint", interactionController.mintCloud);
 
 interactionRegistry.registerPath({
   method: "post",
-  path: "/interaction/transfer",
+  path: "/interaction/transfer-cloud",
   tags: ["Transfer $CLOUD"],
   requestBody: {
     required: true,
