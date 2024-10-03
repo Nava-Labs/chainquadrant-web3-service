@@ -94,7 +94,7 @@ export class WalletService {
 
       return {
         status: StatusCodes.OK,
-        balance: formatEther(balance),
+        balance: parseFloat(formatEther(balance)),
         walletAddress: publicKey,
       };
     } catch (ex) {
