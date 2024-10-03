@@ -11,34 +11,46 @@ class InteractionController {
       return res.status(400).json({ error: "publicKey is required" });
     }
 
-    const serviceResponse = await interactionService.mintCloud(publicKey);
+    const serviceResponse = await interactionService.mintCquad(publicKey);
     return handleServiceResponse(serviceResponse, res);
   };
 
-  public transferCloud: RequestHandler = async (
+  public transferCquad: RequestHandler = async (
     req: Request,
     res: Response,
   ) => {
-    const { fromPublicKey, toPublicKey, amount } = req.body;
-
-    if (!fromPublicKey) {
-      return res.status(400).json({ error: "Missing fromPublicKey." });
-    }
-
-    if (!toPublicKey) {
-      return res.status(400).json({ error: "Missing toPublicKey." });
-    }
+    const { amount, fromPublic, fromPrivate, toPublic } = req.body;
 
     if (!amount) {
-      return res.status(400).json({ error: "Missing amount." });
+      return res.status(400).json({ error: "Missing amount in request body." });
     }
 
-    const serviceResponse = await interactionService.transferCloud(
-      fromPublicKey,
-      toPublicKey,
+    if (!fromPublic) {
+      return res
+        .status(400)
+        .json({ error: "Missing fromPublic in request body." });
+    }
+
+    if (!fromPrivate) {
+      return res
+        .status(400)
+        .json({ error: "Missing fromPrivate in request body." });
+    }
+
+    if (!toPublic) {
+      return res
+        .status(400)
+        .json({ error: "Missing toPublicKey in request body." });
+    }
+
+    const serviceResponse = await interactionService.transferCquad(
       amount,
+      fromPublic,
+      fromPrivate,
+      toPublic,
     );
-    return handleServiceResponse(serviceResponse, res);
+
+    return res.status(serviceResponse.status).json(serviceResponse);
   };
 }
 

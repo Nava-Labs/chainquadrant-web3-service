@@ -6,11 +6,12 @@ import { handleServiceResponse } from "@/common/utils/httpHandlers";
 class WalletController {
   public createWallet: RequestHandler = async (req: Request, res: Response) => {
     const serviceResponse = await walletService.createWallet();
-    return handleServiceResponse(serviceResponse, res);
+
+    return res.status(serviceResponse.status).json(serviceResponse);
   };
 
   public getWallet: RequestHandler = async (req: Request, res: Response) => {
-    const publicKey = req.query.publicKey as string;
+    const publicKey = req.params.publicKey as string;
 
     if (!publicKey) {
       return res
@@ -20,7 +21,8 @@ class WalletController {
 
     const serviceResponse =
       await walletService.getSmartAccountWallet(publicKey);
-    return handleServiceResponse(serviceResponse, res);
+
+    return res.status(serviceResponse.status).json(serviceResponse);
   };
 }
 

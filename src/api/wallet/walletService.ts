@@ -11,20 +11,13 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { toCoinbaseSmartAccount } from "viem/account-abstraction";
 import { erc20Abi, formatEther, isAddress, parseEther } from "viem";
 import { supabaseClient } from "@/common/supabase/client";
-import { CLOUD_ADDRESS } from "@/common/utils/consts";
+import { CQUAD_ADDRESS } from "@/common/utils/consts";
 import { convertReverseNodeToBytes } from "@/common/utils/convertReverseNodeToBytes";
 import { baseSepolia } from "viem/chains";
 import L2ResolverAbi from "@/abis/L2ResolverAbi";
 
-type Wallet = {
-  ownerPublicKey: string;
-  smartAccountWallet: string;
-  basenames: string;
-  cloudBalance?: string;
-};
-
 export class WalletService {
-  async createWallet(): Promise<ServiceResponse<Wallet | null>> {
+  async createWallet(): Promise<any> {
     try {
       const privateKey = generatePrivateKey();
       const owner = privateKeyToAccount(privateKey);
@@ -39,7 +32,7 @@ export class WalletService {
         smart_account: account.address,
       });
 
-      // NOTE: Mint $CLOUD after wallet creation
+      // NOTE: Mint $CQUAD after wallet creation
       const hash = await bundlerClient.sendUserOperation({
         account,
         calls: [
@@ -54,7 +47,7 @@ export class WalletService {
               },
             ],
             functionName: "mint",
-            to: CLOUD_ADDRESS,
+            to: CQUAD_ADDRESS,
             args: [account.address, parseEther("100", "wei")],
           },
         ],
@@ -62,83 +55,56 @@ export class WalletService {
 
       // const receipt = await bundlerClient.waitForUserOperationReceipt({ hash });
 
-      const walletDetails: Wallet = {
-        ownerPublicKey: owner.address,
-        smartAccountWallet: account.address,
-        basenames: "",
+      return {
+        status: StatusCodes.OK,
+        publicKey: account.address,
+        privateKey: privateKey,
       };
-
-      return ServiceResponse.success<Wallet>(
-        "Successfully created wallet!",
-        walletDetails,
-      );
     } catch (ex) {
-      const errorMessage = `Error finding wallet: $${(ex as Error).message}`;
+      const errorMessage = `Error create wallet: $${(ex as Error).message}`;
       logger.error(errorMessage);
-      return ServiceResponse.failure(
-        "An error occurred while creating wallet.",
-        null,
-        StatusCodes.INTERNAL_SERVER_ERROR,
-      );
+
+      return {
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "An error occurred while creating wallet.",
+      };
     }
   }
 
-  async getSmartAccountWallet(
-    publicKey: string,
-  ): Promise<ServiceResponse<Wallet | null>> {
+  async getSmartAccountWallet(publicKey: string): Promise<any> {
     try {
-      const { data: user, error } = await supabaseClient
-        .from("users")
-        .select()
-        .eq("public_key", publicKey)
-        .single();
-
-      const owner = privateKeyToAccount(user.private_key);
-
-      const account = await toCoinbaseSmartAccount({
-        client,
-        owners: [owner],
-      });
-
       const balance = await client.readContract({
-        address: CLOUD_ADDRESS,
+        address: CQUAD_ADDRESS,
         abi: erc20Abi,
         functionName: "balanceOf",
-        args: [account.address],
+        args: [publicKey as `0x{string}`],
       });
 
-      const addressReverseNode = convertReverseNodeToBytes(
-        publicKey as `0x${string}`,
-        // "0x461534226489954A699d3f23BcFcCAFba3B11514",
-        baseSepolia.id,
-      );
+      // const addressReverseNode = convertReverseNodeToBytes(
+      //   publicKey as `0x${string}`,
+      //   baseSepolia.id,
+      // );
 
-      const basenames = await client.readContract({
-        abi: L2ResolverAbi,
-        address: customBaseSepolia.contracts.ensUniversalResolver.address,
-        functionName: "name",
-        args: [addressReverseNode],
-      });
+      // const basenames = await client.readContract({
+      //   abi: L2ResolverAbi,
+      //   address: customBaseSepolia.contracts.ensUniversalResolver.address,
+      //   functionName: "name",
+      //   args: [addressReverseNode],
+      // });
 
-      const walletDetails: Wallet = {
-        ownerPublicKey: owner.address,
-        smartAccountWallet: account.address,
-        basenames,
-        cloudBalance: formatEther(balance),
+      return {
+        status: StatusCodes.OK,
+        balance: formatEther(balance),
+        walletAddress: publicKey,
       };
-
-      return ServiceResponse.success<Wallet>(
-        "Successfully get smart account wallet!",
-        walletDetails,
-      );
     } catch (ex) {
       const errorMessage = `Error finding wallet: $${(ex as Error).message}`;
       logger.error(errorMessage);
-      return ServiceResponse.failure(
-        "An error occurred while retrieving wallet details.",
-        null,
-        StatusCodes.INTERNAL_SERVER_ERROR,
-      );
+
+      return {
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "An error occurred while retrieving wallet details.",
+      };
     }
   }
 }

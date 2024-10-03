@@ -11,7 +11,7 @@ export const interactionRouter: Router = express.Router();
 interactionRegistry.registerPath({
   method: "post",
   path: "/interaction/mint",
-  tags: ["Mint $CLOUD"],
+  tags: ["Mint $CQUAD"],
   requestBody: {
     required: true,
     content: {
@@ -21,7 +21,7 @@ interactionRegistry.registerPath({
           properties: {
             publicKey: {
               type: "string",
-              description: "Public key for minting $CLOUD tokens",
+              description: "Public key for minting $CQUAD tokens",
             },
           },
           required: ["publicKey"], // Specify required fields
@@ -36,8 +36,8 @@ interactionRouter.post("/mint", interactionController.mintCloud);
 
 interactionRegistry.registerPath({
   method: "post",
-  path: "/interaction/transfer-cloud",
-  tags: ["Transfer $CLOUD"],
+  path: "/interaction/transfer-cquad",
+  tags: ["Transfer $CQUAD"],
   requestBody: {
     required: true,
     content: {
@@ -45,17 +45,21 @@ interactionRegistry.registerPath({
         schema: {
           type: "object",
           properties: {
-            fromPublicKey: {
+            amount: {
+              type: "number",
+              description: "Amount of $CQUAD tokens to transfer",
+            },
+            fromPublic: {
               type: "string",
               description: "Sender's public key",
+            },
+            fromPrivate: {
+              type: "string",
+              description: "Sender's private key",
             },
             toPublicKey: {
               type: "string",
               description: "Receiver's public key",
-            },
-            amount: {
-              type: "number",
-              description: "Amount of $CLOUD tokens to transfer",
             },
           },
           required: ["fromPublicKey", "toPublicKey", "amount"], // All fields are required
@@ -63,7 +67,7 @@ interactionRegistry.registerPath({
       },
     },
   },
-  responses: createApiResponse(z.null(), "Success"),
+  responses: {},
 });
 
-interactionRouter.post("/transfer-cloud", interactionController.transferCloud);
+interactionRouter.post("/transfer-cquad", interactionController.transferCquad);

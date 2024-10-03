@@ -3,11 +3,11 @@ import { StatusCodes } from "http-status-codes";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { bundlerClient, client } from "@/common/smart-account/client";
 import { logger } from "@/server";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { privateKeyToAccount } from "viem/accounts";
 import { toCoinbaseSmartAccount } from "viem/account-abstraction";
-import { erc20Abi, formatEther, isAddress, parseEther } from "viem";
+import { erc20Abi, isAddress, parseEther } from "viem";
 import { supabaseClient } from "@/common/supabase/client";
-import { CLOUD_ADDRESS } from "@/common/utils/consts";
+import { CQUAD_ADDRESS } from "@/common/utils/consts";
 
 type InteractionResponse = {
   smartAccountWallet: string;
@@ -15,7 +15,7 @@ type InteractionResponse = {
 };
 
 export class InteractionService {
-  async mintCloud(
+  async mintCquad(
     publicKey: string,
   ): Promise<ServiceResponse<InteractionResponse | null>> {
     try {
@@ -46,7 +46,7 @@ export class InteractionService {
               },
             ],
             functionName: "mint",
-            to: CLOUD_ADDRESS,
+            to: CQUAD_ADDRESS,
             args: [account.address, parseEther("100", "wei")],
           },
         ],
@@ -62,32 +62,33 @@ export class InteractionService {
       };
 
       return ServiceResponse.success<InteractionResponse>(
-        "Successfully mint $CLOUD!",
+        "Successfully mint $CQUAD!",
         mintDetails,
       );
     } catch (ex) {
       const errorMessage = `Error finding wallet: $${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure(
-        "An error occurred while minting $CLOUD.",
+        "An error occurred while minting $CQUAD.",
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  async transferCloud(
-    fromPublicKey: string,
-    toPublicKey: string,
+  async transferCquad(
     amount: string,
-  ): Promise<ServiceResponse<InteractionResponse | string | null>> {
+    fromPublic: string,
+    fromPrivate: string,
+    toPublic: string,
+  ): Promise<any> {
     let receiverAddress;
 
     try {
-      if (isAddress(toPublicKey)) {
-        receiverAddress = toPublicKey;
+      if (isAddress(toPublic)) {
+        receiverAddress = toPublic;
       } else {
-        const address = await client.getEnsAddress({ name: toPublicKey });
+        const address = await client.getEnsAddress({ name: toPublic });
         receiverAddress = address;
       }
 
@@ -95,13 +96,7 @@ export class InteractionService {
         throw Error("Invalid toPublicKey.");
       }
 
-      const { data: user, error } = await supabaseClient
-        .from("users")
-        .select()
-        .eq("public_key", fromPublicKey)
-        .single();
-
-      const owner = privateKeyToAccount(user.private_key);
+      const owner = privateKeyToAccount(fromPrivate as `0x{string}`);
 
       const account = await toCoinbaseSmartAccount({
         client,
@@ -114,8 +109,11 @@ export class InteractionService {
           {
             abi: erc20Abi,
             functionName: "transfer",
-            to: CLOUD_ADDRESS,
-            args: [receiverAddress as `0x${string}`, parseEther(amount, "wei")],
+            to: CQUAD_ADDRESS,
+            args: [
+              receiverAddress as `0x${string}`,
+              parseEther(parseFloat(amount).toString(), "wei"),
+            ],
           },
         ],
       });
@@ -124,23 +122,22 @@ export class InteractionService {
         hash,
       });
 
-      const transferResponse: InteractionResponse = {
-        smartAccountWallet: account.address,
-        txHash: opReceipt.receipt.transactionHash,
-      };
+      const txhash = opReceipt.receipt.transactionHash;
 
-      return ServiceResponse.success<InteractionResponse>(
-        "Successfully transfer $CLOUD!",
-        transferResponse,
-      );
+      return {
+        status: StatusCodes.OK,
+        fromPublic,
+        transactionId: txhash,
+        transactionUrl: `https://sepolia.basescan.org/tx/${txhash}`,
+      };
     } catch (ex) {
-      const errorMessage = `Error transfer $CLOUD: ${(ex as Error).message}`;
+      const errorMessage = `Error transfer $CQUAD: ${(ex as Error).message}`;
       logger.error(errorMessage);
-      return ServiceResponse.failure(
-        "An error occurred while transferring $CLOUD.",
-        errorMessage,
-        StatusCodes.INTERNAL_SERVER_ERROR,
-      );
+
+      return {
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "An error occurred while transferring $CQUAD.",
+      };
     }
   }
 }

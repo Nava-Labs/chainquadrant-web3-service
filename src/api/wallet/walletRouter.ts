@@ -11,27 +11,16 @@ walletRegistry.registerPath({
   method: "post",
   path: "/wallet/create",
   tags: ["Create Wallet"],
-  responses: createApiResponse(z.null(), "Success"),
+  responses: {},
 });
 
 walletRouter.post("/create", walletController.createWallet);
 
 walletRegistry.registerPath({
   method: "get",
-  path: "/wallet",
-  tags: ["Get Wallet Details"],
-  parameters: [
-    {
-      name: "publicKey",
-      in: "query",
-      required: true,
-      schema: {
-        type: "string",
-      },
-      description: "Public key to fetch wallet details",
-    },
-  ],
-  responses: createApiResponse(z.null(), "Success"),
+  path: "/wallet/{publicKey}",
+  tags: ["Get Wallet $CQUAD Balance"],
+  responses: {},
 });
 
-walletRouter.get("/", walletController.getWallet);
+walletRouter.get("/:publicKey", walletController.getWallet);
