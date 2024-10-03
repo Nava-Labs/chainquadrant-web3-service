@@ -19,12 +19,12 @@ export class ServiceResponse<T = null> {
     this.statusCode = statusCode;
   }
 
-  static success<T extends object>(
+  static success<T>(
     message: string,
     responseObject: T,
     statusCode: number = StatusCodes.OK,
   ) {
-    return new ServiceResponse(true, message, ...responseObject, statusCode);
+    return new ServiceResponse(true, message, responseObject, statusCode);
   }
 
   static failure<T>(
