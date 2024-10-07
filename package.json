@@ -1,8 +1,8 @@
 {
-  "name": "astaverse-web3",
+  "name": "cq-web3-service",
   "version": "1.0.0",
-  "description": "astaverse-web3",
-  "author": "Nava Labs",
+  "description": "cq-web3-service",
+  "author": "Asthaverse",
   "repository": "",
   "license": "MIT",
   "main": "index.ts",
